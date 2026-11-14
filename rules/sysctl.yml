@@ -1,0 +1,145 @@
+# 内核网络与审计参数基线(sysctl)
+rules:
+  - id: SYSCTL-001
+    title: 开启数据包转发功能限制(非路由器应关闭 IPv4 转发)
+    component: sysctl
+    severity: medium
+    tags: [等保-8.1.4.4, 网络控制]
+    fact: sysctl.param
+    args: { key: net.ipv4.ip_forward }
+    operator: eq
+    expected: "0"
+    on_empty: fail
+    rationale: 主机角色若不是路由器,开启转发可能被用于流量中转/绕过边界控制。
+    remediation: |
+      /etc/sysctl.conf 或 /etc/sysctl.d/99-baseline.conf:
+        net.ipv4.ip_forward = 0
+      sysctl -w net.ipv4.ip_forward=0
+    references: [CIS 3.2.1]
+
+  - id: SYSCTL-002
+    title: 关闭 ICMP 重定向接受
+    component: sysctl
+    severity: medium
+    tags: [等保-8.1.4.4, 抗攻击]
+    fact: sysctl.param
+    args: { key: net.ipv4.conf.all.accept_redirects }
+    operator: eq
+    expected: "0"
+    on_empty: fail
+    rationale: 接受 ICMP 重定向可被用于路由劫持。
+    remediation: "sysctl: net.ipv4.conf.all.accept_redirects = 0"
+    references: [CIS 3.3.2]
+
+  - id: SYSCTL-003
+    title: 关闭源路由包接受
+    component: sysctl
+    severity: medium
+    tags: [等保-8.1.4.4, 抗攻击]
+    fact: sysctl.param
+    args: { key: net.ipv4.conf.all.accept_source_route }
+    operator: eq
+    expected: "0"
+    on_empty: fail
+    remediation: "sysctl: net.ipv4.conf.all.accept_source_route = 0"
+    references: [CIS 3.3.1]
+
+  - id: SYSCTL-004
+    title: 开启反向路径过滤
+    component: sysctl
+    severity: medium
+    tags: [等保-8.1.4.4, 抗欺骗]
+    fact: sysctl.param
+    args: { key: net.ipv4.conf.all.rp_filter }
+    operator: in
+    expected: ["1", "2"]
+    on_empty: fail
+    rationale: rp_filter 校验源地址,缓解 IP 欺骗。
+    remediation: "sysctl: net.ipv4.conf.all.rp_filter = 1"
+    references: [CIS 3.3.5]
+
+  - id: SYSCTL-005
+    title: 关闭 ICMP 广播应答
+    component: sysctl
+    severity: low
+    fact: sysctl.param
+    args: { key: net.ipv4.icmp_echo_ignore_broadcasts }
+    operator: eq
+    expected: "1"
+    on_empty: fail
+    remediation: "sysctl: net.ipv4.icmp_echo_ignore_broadcasts = 1"
+    references: [CIS 3.3.4]
+
+  - id: SYSCTL-006
+    title: 开启 SYN Cookie 防护
+    component: sysctl
+    severity: high
+    tags: [等保-8.1.4.4, 抗拒绝服务]
+    fact: sysctl.param
+    args: { key: net.ipv4.tcp_syncookies }
+    operator: eq
+    expected: "1"
+    on_empty: fail
+    rationale: 等保要求应对资源耗尽型攻击,SYN Cookie 可缓解 SYN Flood。
+    remediation: "sysctl: net.ipv4.tcp_syncookies = 1"
+    references: [CIS 3.3.8]
+
+  - id: SYSCTL-007
+    title: 限制 core dump(suid 程序)
+    component: sysctl
+    severity: low
+    fact: sysctl.param
+    args: { key: fs.suid_dumpable }
+    operator: eq
+    expected: "0"
+    on_empty: pass
+    rationale: suid 程序转储可能泄露敏感内存。
+    remediation: "sysctl: fs.suid_dumpable = 0"
+    references: [CIS 1.5.2]
+
+  - id: SYSCTL-008
+    title: 启用地址空间随机化(ASLR)
+    component: sysctl
+    severity: medium
+    fact: sysctl.param
+    args: { key: kernel.randomize_va_space }
+    operator: ge
+    expected: 2
+    on_empty: fail
+    rationale: ASLR 提高漏洞利用难度,是基础系统加固项。
+    remediation: "sysctl: kernel.randomize_va_space = 2"
+    references: [CIS 1.5.3]
+
+  - id: SYSCTL-009
+    title: 禁止普通用户使用 dmesg
+    component: sysctl
+    severity: low
+    fact: sysctl.param
+    args: { key: kernel.dmesg_restrict }
+    operator: eq
+    expected: "1"
+    on_empty: pass
+    remediation: "sysctl: kernel.dmesg_restrict = 1"
+
+  - id: SYSCTL-010
+    title: 限制内核指针暴露
+    component: sysctl
+    severity: low
+    fact: sysctl.param
+    args: { key: kernel.kptr_restrict }
+    operator: ge
+    expected: 1
+    on_empty: pass
+    remediation: "sysctl: kernel.kptr_restrict = 2"
+
+  - id: SYSCTL-011
+    title: IPv6 重定向接受关闭(启用 IPv6 时)
+    component: sysctl
+    severity: low
+    fact: sysctl.param
+    args: { key: net.ipv6.conf.all.accept_redirects }
+    operator: eq
+    expected: "0"
+    on_empty: pass
+    rationale: 未启用 IPv6 的主机无此参数时视为不适用。
+    remediation: "sysctl: net.ipv6.conf.all.accept_redirects = 0"

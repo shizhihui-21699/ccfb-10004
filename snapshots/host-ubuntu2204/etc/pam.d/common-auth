@@ -1,0 +1,16 @@
+#%PAM-1.0
+# Ubuntu 上仍是老式 common-auth,未启用 faillock
+auth    required    pam_env.so
+auth    [success=1 default=ignore]      pam_unix.so nullok
+auth    requisite   pam_deny.so
+auth    required    pam_permit.so
+
+account required    pam_unix.so
+
+password        requisite                       pam_pwquality.so retry=3
+password        [success=1 default=ignore]      pam_unix.so obscure use_authtok try_first_pass yescrypt
+password        requisite                       pam_deny.so
+password        required                        pam_permit.so
+
+session optional pam_lastlog.so
+session required pam_unix.so

@@ -1,0 +1,10 @@
+#
+# /etc/login.defs - Ubuntu 默认,口令策略偏弱
+#
+PASS_MAX_DAYS   99999
+PASS_MIN_DAYS   0
+PASS_WARN_AGE   7
+UMASK           022
+ENCRYPT_METHOD  YESCRYPT
+# PASS_MIN_LEN 由 pwquality 接管,这里未设置
+# TMOUT 未配置

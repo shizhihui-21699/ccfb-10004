@@ -1,0 +1,3 @@
+# 片段:被 @include 直接引入
+# 注意文件名没有 ~ 结尾,会被读取
+intern ALL=(ALL) ALL

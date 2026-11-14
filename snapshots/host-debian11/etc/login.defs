@@ -1,0 +1,4 @@
+# login.defs 极简,多数键缺失
+PASS_MAX_DAYS   180
+UMASK           022
+ENCRYPT_METHOD  SHA512

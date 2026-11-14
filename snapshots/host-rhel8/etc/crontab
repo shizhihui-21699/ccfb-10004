@@ -1,0 +1,7 @@
+# /etc/crontab - root 维护
+SHELL=/bin/bash
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+MAILTO=root
+
+# 每日日志轮转
+25 6 * * * root /usr/sbin/logrotate /etc/logrotate.conf

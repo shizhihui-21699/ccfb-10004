@@ -1,0 +1,14 @@
+Defaults env_reset
+Defaults mail_badpass
+Defaults secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+Defaults logfile="/var/log/sudo.log"
+# 注意:整改时误设为 120 分钟,比整改前的 60 分钟离基线(15)更远,diff 应报"变差"
+Defaults timestamp_timeout=120
+
+root    ALL=(ALL:ALL) ALL
+%sudo   ALL=(ALL:ALL) ALL
+
+# deploy 收窄为具体部署命令,取消 NOPASSWD ALL
+deploy ALL=(root) /usr/bin/systemctl restart nginx, /usr/bin/systemctl reload nginx
+
+#includedir /etc/sudoers.d

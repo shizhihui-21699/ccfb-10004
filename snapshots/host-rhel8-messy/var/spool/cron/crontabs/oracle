@@ -1,0 +1,3 @@
+# 用户级 crontab(无用户名列)
+@daily /home/oracle/scripts/statspack.sh
+0 9-18/2 * * 1-5 /home/oracle/scripts/check_lock.sh

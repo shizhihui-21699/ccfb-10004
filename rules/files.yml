@@ -1,0 +1,89 @@
+# 关键文件权限与存在性基线(证据来自快照 snapshot.json 元数据)
+rules:
+  - id: FILE-001
+    title: /etc/shadow 权限不宽于 0600 且属主为 root
+    component: file
+    severity: high
+    tags: [等保-8.1.4.4, 文件权限]
+    fact: file.stat
+    args: { path: /etc/shadow }
+    operator: file_mode_at_most
+    expected: "0600"
+    on_empty: fail
+    empty_message: 快照缺少 /etc/shadow 或未采集权限元数据
+    rationale: shadow 存放口令哈希,任何组/其他位可读都属于严重配置缺陷。
+    remediation: "chown root:root /etc/shadow && chmod 600 /etc/shadow"
+    references: [CIS 6.1.2]
+
+  - id: FILE-002
+    title: /etc/passwd 权限不宽于 0644
+    component: file
+    severity: medium
+    fact: file.stat
+    args: { path: /etc/passwd }
+    operator: file_mode_at_most
+    expected: "0644"
+    on_empty: fail
+    remediation: "chown root:root /etc/passwd && chmod 644 /etc/passwd"
+    references: [CIS 6.1.1]
+
+  - id: FILE-003
+    title: /etc/gshadow 权限不宽于 0640
+    component: file
+    severity: medium
+    fact: file.stat
+    args: { path: /etc/gshadow }
+    operator: file_mode_at_most
+    expected: "0640"
+    on_empty: fail
+    remediation: "chown root:root /etc/gshadow && chmod 640 /etc/gshadow"
+
+  - id: FILE-004
+    title: sshd_config 权限不宽于 0600
+    component: file
+    severity: medium
+    fact: file.stat
+    args: { path: /etc/ssh/sshd_config }
+    operator: file_mode_at_most
+    expected: "0600"
+    on_empty: fail
+    rationale: 配置文件过宽可能被非授权账户篡改认证策略。
+    remediation: "chmod 600 /etc/ssh/sshd_config"
+
+  - id: FILE-005
+    title: sudoers 文件权限不宽于 0440
+    component: file
+    severity: high
+    fact: file.stat
+    args: { path: /etc/sudoers }
+    operator: file_mode_at_most
+    expected: "0440"
+    on_empty: fail
+    rationale: sudoers 可写即等于提权路径。
+    remediation: "chmod 440 /etc/sudoers && chown root:root /etc/sudoers"
+    references: [CIS 5.3.1]
+
+  - id: FILE-006
+    title: cron.allow 权限不宽于 0600
+    component: file
+    severity: medium
+    fact: file.stat
+    args: { path: /etc/cron.allow }
+    operator: file_mode_at_most
+    expected: "0600"
+    on_empty: pass
+    rationale: 文件不存在时由 CRON-001 判定,这里不重复报错。
+    remediation: "chmod 600 /etc/cron.allow"
+
+  - id: FILE-007
+    title: 存在 /etc/issue 登录警告标识
+    component: file
+    severity: low
+    tags: [等保-8.1.5.1, 安全警示]
+    fact: file.exists
+    args: { path: /etc/issue }
+    operator: eq
+    expected: true
+    on_empty: fail
+    rationale: 等保要求对登录用户给出安全警示。
+    remediation: 写入授权访问提示内容到 /etc/issue 与 /etc/issue.net。

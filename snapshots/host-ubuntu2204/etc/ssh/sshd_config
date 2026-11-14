@@ -1,0 +1,21 @@
+# Ubuntu 22.04 默认配置 + 运维手工改动,历史包袱较多
+# 注意:本文件没有 Include sshd_config.d,但目录里仍有散落配置(不会被加载)
+
+Port 22
+#Protocol 2
+PermitRootLogin yes
+PermitEmptyPasswords no
+#MaxAuthTries 6
+#ClientAliveInterval 0
+#ClientAliveCountMax 3
+X11Forwarding yes
+PasswordAuthentication yes
+PubkeyAuthentication yes
+HostbasedAuthentication no
+Ciphers aes128-ctr,aes192-ctr,aes256-ctr,aes128-cbc
+MACs hmac-sha2-256,hmac-md5
+# 没有 AllowGroups / AllowUsers
+
+# 数据库管理员要求保留 root 通道
+Match User root
+    PermitRootLogin yes

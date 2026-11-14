@@ -1,0 +1,2 @@
+# 监控代理安装脚本生成
+zabbix ALL=(root) NOPASSWD: /usr/bin/systemctl status zabbix-agent

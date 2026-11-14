@@ -1,0 +1,261 @@
+# SSH 服务安全基线(sshd_config,含 Match 块上下文判断)
+rules:
+  - id: SSHD-001
+    title: 禁止 SSH 协议版本 1
+    component: sshd
+    severity: high
+    tags: [等保-8.1.3.1, 身份鉴别, 通信安全]
+    fact: sshd.setting
+    args: { key: Protocol }
+    operator: ne
+    expected: "1"
+    on_empty: pass        # 现代 OpenSSH 已移除该指令,缺省即安全
+    rationale: SSHv1 存在设计缺陷,可被中间人攻击,等保要求使用安全协议版本。
+    remediation: |
+      在 /etc/ssh/sshd_config 中删除 Protocol 1,或显式配置:
+        Protocol 2
+      升级到支持仅 SSHv2 的 OpenSSH 版本后可直接删除该行。
+    references: [GB/T 22239-2019 8.1.3.1, CIS 5.2.9]
+
+  - id: SSHD-002
+    title: 禁止 root 直接远程登录
+    component: sshd
+    severity: high
+    tags: [等保-8.1.4.1, 访问控制]
+    fact: sshd.setting
+    args: { key: PermitRootLogin }
+    operator: in
+    expected: ["no", "prohibit-password"]
+    on_empty: fail
+    empty_message: 未显式配置 PermitRootLogin,默认值随发行版变化,必须显式收紧
+    rationale: 直接允许 root 远程登录绕过最小权限原则,暴力破解成功即获得最高权限。
+    remediation: |
+      /etc/ssh/sshd_config:
+        PermitRootLogin no
+      systemctl restart sshd
+
+  - id: SSHD-003
+    title: 关闭空密码账户远程登录
+    component: sshd
+    severity: high
+    tags: [等保-8.1.3.1, 身份鉴别]
+    fact: sshd.setting
+    args: { key: PermitEmptyPasswords }
+    operator: eq
+    expected: "no"
+    on_empty: pass
+    rationale: 空密码账户可直接登录,身份鉴别机制形同虚设。
+    remediation: "sshd_config 增加: PermitEmptyPasswords no"
+    references: [CIS 5.2.11]
+
+  - id: SSHD-004
+    title: 启用公钥认证
+    component: sshd
+    severity: medium
+    tags: [等保-8.1.3.1, 身份鉴别]
+    fact: sshd.setting
+    args: { key: PubkeyAuthentication }
+    operator: eq
+    expected: "yes"
+    on_empty: pass
+    rationale: 公钥认证抗暴力破解能力远高于纯口令认证。
+    remediation: "sshd_config: PubkeyAuthentication yes"
+
+  - id: SSHD-005
+    title: 限制口令认证尝试次数
+    component: sshd
+    severity: medium
+    tags: [等保-8.1.3.1, 身份鉴别, 登录失败处理]
+    fact: sshd.setting
+    args: { key: MaxAuthTries }
+    operator: le
+    expected: 4
+    on_empty: fail
+    rationale: MaxAuthTries 过大降低在线暴力破解成本,等保要求具备登录失败处理功能。
+    remediation: "sshd_config: MaxAuthTries 4"
+    references: [CIS 5.2.14]
+
+  - id: SSHD-006
+    title: 设置会话空闲超时(ClientAliveInterval)
+    component: sshd
+    severity: medium
+    tags: [等保-8.1.3.4, 会话超时]
+    fact: sshd.setting
+    args: { key: ClientAliveInterval }
+    operator: gt
+    expected: 0
+    on_empty: fail
+    rationale: 无人值守的 SSH 会话应自动断开,等保要求会话超时自动终止。
+    remediation: |
+      sshd_config:
+        ClientAliveInterval 300
+        ClientAliveCountMax 3
+
+  - id: SSHD-007
+    title: 空闲超时探测次数受限(ClientAliveCountMax)
+    component: sshd
+    severity: low
+    tags: [等保-8.1.3.4, 会话超时]
+    fact: sshd.setting
+    args: { key: ClientAliveCountMax }
+    operator: le
+    expected: 3
+    on_empty: pass
+    rationale: 与 ClientAliveInterval 共同决定会话超时上限。
+    remediation: "sshd_config: ClientAliveCountMax 3"
+
+  - id: SSHD-008
+    title: 禁止使用弱加密算法
+    component: sshd
+    severity: high
+    tags: [等保-8.1.3.3, 通信保密性]
+    fact: sshd.setting
+    args: { key: Ciphers }
+    operator: not_contains
+    expected: "cbc"
+    on_empty: pass
+    empty_message: 未显式限制算法,依赖 OpenSSH 默认策略(新版本默认已禁用 CBC)
+    rationale: CBC 模式存在已知攻击面,等保要求使用国家或行业认可的密码算法。
+    remediation: |
+      sshd_config:
+        Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes192-ctr,aes128-ctr
+    references: [CIS 5.2.12]
+
+  - id: SSHD-009
+    title: 禁止使用弱 MAC 算法
+    component: sshd
+    severity: medium
+    tags: [等保-8.1.3.3, 通信保密性]
+    fact: sshd.setting
+    args: { key: MACs }
+    operator: not_contains
+    expected: "md5"
+    on_empty: pass
+    rationale: hmac-md5 系列完整性算法已不满足等保密码要求。
+    remediation: "sshd_config: MACs hmac-sha2-512,hmac-sha2-256,hmac-sha2-512-etm@openssh.com"
+
+  - id: SSHD-010
+    title: 禁止使用弱密钥交换算法
+    component: sshd
+    severity: medium
+    tags: [等保-8.1.3.3, 通信保密性]
+    fact: sshd.setting
+    args: { key: KexAlgorithms }
+    operator: not_contains
+    expected: "diffie-hellman-group1-sha1"
+    on_empty: pass
+    rationale: group1-sha1 仅 1024 位且使用 SHA1,应禁用。
+    remediation: "sshd_config: KexAlgorithms curve25519-sha256,diffie-hellman-group16-sha512,diffie-hellman-group18-sha512"
+
+  - id: SSHD-011
+    title: 关闭基于主机的信任认证
+    component: sshd
+    severity: medium
+    tags: [等保-8.1.4.1, 访问控制]
+    fact: sshd.setting
+    args: { key: HostbasedAuthentication }
+    operator: eq
+    expected: "no"
+    on_empty: pass
+    rationale: HostbasedAuthentication 信任客户端主机名,可被伪造。
+    remediation: "sshd_config: HostbasedAuthentication no"
+
+  - id: SSHD-012
+    title: 关闭 .rhosts 信任文件
+    component: sshd
+    severity: low
+    tags: [访问控制]
+    fact: sshd.setting
+    args: { key: IgnoreRhosts }
+    operator: eq
+    expected: "yes"
+    on_empty: pass
+    remediation: "sshd_config: IgnoreRhosts yes"
+
+  - id: SSHD-013
+    title: 关闭 X11 转发
+    component: sshd
+    severity: low
+    tags: [最小化]
+    fact: sshd.setting
+    args: { key: X11Forwarding }
+    operator: eq
+    expected: "no"
+    on_empty: pass
+    rationale: 非必要服务应关闭,减小攻击面。
+    remediation: "sshd_config: X11Forwarding no"
+
+  - id: SSHD-014
+    title: 登录宽限期不超过 60 秒
+    component: sshd
+    severity: low
+    fact: sshd.setting
+    args: { key: LoginGraceTime }
+    operator: le
+    expected: 60
+    on_empty: pass
+    rationale: 过长的宽限期占用未认证连接资源,可被用于资源耗尽。
+    remediation: "sshd_config: LoginGraceTime 30"
+
+  - id: SSHD-015
+    title: 限制可通过 SSH 登录的用户组(存在 AllowUsers/AllowGroups)
+    component: sshd
+    severity: medium
+    tags: [等保-8.1.4.2, 最小授权]
+    fact: sshd.setting
+    args: { key: AllowGroups }
+    operator: exists
+    on_empty: fail
+    empty_message: 未配置 AllowGroups/AllowUsers,所有有效账户均可 SSH 登录
+    rationale: 等保要求按最小授权控制远程登录主体范围。
+    remediation: |
+      sshd_config:
+        AllowGroups sshusers
+      并将需要远程登录的账户加入 sshusers 组。
+
+  # ---- Match 块上下文相关规则 ----
+  - id: SSHD-101
+    title: Match 块中不得为 root 单独放开登录限制
+    component: sshd
+    severity: high
+    tags: [等保-8.1.4.1, Match块]
+    fact: sshd.setting
+    args:
+      key: PermitRootLogin
+      match: { user: root }
+    operator: in
+    expected: ["no", "prohibit-password"]
+    on_empty: pass        # 没有针对 root 的 Match 覆盖即视为未放开
+    rationale: 全局收紧后,常见绕过手法是在 Match User root 块里重新放开,
+      必须对上下文单独判定。
+    remediation: 删除 Match User root 块内的 PermitRootLogin yes。
+
+  - id: SSHD-102
+    title: Match 块中不得出现 PermitEmptyPasswords yes
+    component: sshd
+    severity: high
+    tags: [等保-8.1.3.1, Match块]
+    fact: sshd.setting
+    args:
+      key: PermitEmptyPasswords
+      match: {}          # 任意 Match 块
+    operator: eq
+    expected: "no"
+    match_policy: all
+    on_empty: pass
+    rationale: Match 块内放开空密码会使全局设置失效。
+    remediation: 删除 Match 块中的 PermitEmptyPasswords yes。
+
+  - id: SSHD-103
+    title: 不得对全网段地址放宽认证要求
+    component: sshd
+    severity: medium
+    tags: [等保-8.1.4.1, Match块]
+    fact: sshd.match_blocks
+    args: {}
+    operator: regex
+    expected: '(?i)addr(?:ess)?\s+0\.0\.0\.0/0'
+    match_policy: none      # 任何一个块匹配上即 FAIL
+    on_empty: pass
+    rationale: 对 0.0.0.0/0 的 Match 等同于全局放开,条件写法需复核。
+    remediation: 收紧 Match Address 的网段范围。

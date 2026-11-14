@@ -1,0 +1,2 @@
+# 波浪号结尾的备份文件,sudoers 不会加载,解析器也应跳过
+oldadmin ALL=(ALL) NOPASSWD: ALL

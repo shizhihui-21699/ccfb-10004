@@ -1,0 +1,59 @@
+# 计划任务与定时访问控制基线
+rules:
+  - id: CRON-001
+    title: 存在 cron.allow 白名单或显式 cron.deny
+    component: cron
+    severity: medium
+    tags: [等保-8.1.4.2, 最小授权]
+    fact: file.exists
+    args: { path: /etc/cron.allow }
+    operator: eq
+    expected: true
+    on_empty: fail
+    rationale: 仅 cron.deny 是黑名单模式,新建账户默认可建定时任务;
+      cron.allow 白名单更符合最小授权。
+    remediation: |
+      touch /etc/cron.allow
+      chown root:root /etc/cron.allow && chmod 600 /etc/cron.allow
+      仅写入允许使用 cron 的账户。
+    references: [CIS 5.1.1]
+
+  - id: CRON-002
+    title: cron.deny 不得包含通配或空文件放行
+    component: cron
+    severity: low
+    fact: cron.access_list
+    args: { file: cron.deny }
+    operator: ne
+    expected: "ALL"
+    match_policy: all
+    on_empty: pass
+    rationale: 出现 ALL 等条目说明配置意图可能错误。
+    remediation: 复核 /etc/cron.deny 条目,优先改用 cron.allow。
+
+  - id: CRON-003
+    title: 定时任务中不存在可疑的远程脚本管道执行
+    component: cron
+    severity: high
+    tags: [等保-8.1.4.3, 入侵排查]
+    fact: cron.jobs
+    args: { risky_only: true }
+    pass_when: { kind: no_risky_cron }
+    match_policy: all
+    on_empty: pass
+    rationale: curl|bash、base64 -d、/dev/tcp 等是持久化木马常见写法,
+      等保复测必须排查计划任务里的异常命令。
+    remediation: |
+      逐条 crontab -l 与 /etc/cron.d/ 排查,删除未知任务,
+      并溯源对应账户是否失陷。
+
+  - id: CRON-004
+    title: 禁止普通用户持有 root 级定时任务外的宽权限(用户 crontab 可审计)
+    component: cron
+    severity: low
+    fact: cron.jobs
+    args: {}
+    operator: exists
+    on_empty: pass
+    rationale: 完全没有定时任务时跳过;有任务时应能在报告中逐条核对。
+    remediation: 对报告中列出的每条任务确认业务归属。

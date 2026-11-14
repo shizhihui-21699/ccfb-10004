@@ -1,0 +1,47 @@
+# =====================================================================
+# 这台机器三任运维改过,sshd_config 故意保留各种历史写法
+# 备份片段 2019-03: 当时允许 root 直接登录
+#   PermitRootLogin yes
+# =====================================================================
+
+### 基础项(重复键:sshd 首次出现生效,后面两行应被标记为遮蔽行)###
+PermitRootLogin yes
+PermitRootLogin no
+PermitRootLogin prohibit-password
+
+Port 22
+Port 2222                      # 第二个 Port 实际仍会被 sshd 累加监听,但核查关注首值语义
+#PermitEmptyPasswords no      # 老陈注释掉的,现在空密码策略实际走默认
+PermitEmptyPasswords yes
+
+MaxAuthTries 6
+   MaxAuthTries 3             # 行首多余空格 + 重复键
+MaxAuthTries  2
+
+# 通配 include,目录里有两个文件,加载顺序按文件名字典序
+Include /etc/ssh/sshd_config.d/*.conf
+
+ClientAliveInterval 0
+ClientAliveInterval 600
+ClientAliveCountMax 5
+X11Forwarding yes
+HostbasedAuthentication yes
+IgnoreRhosts no
+Ciphers aes128-cbc,3des-cbc,aes256-ctr
+MACs hmac-md5,hmac-sha1,hmac-sha2-256
+LoginGraceTime 120
+
+# Match 块 1:给某个供应商账户开口子(还把 root 也带进来了,命中上下文规则)
+Match User vendor,root
+    PermitRootLogin yes
+    PermitEmptyPasswords yes
+    X11Forwarding yes
+
+# Match 块 2:按地址+用户组合条件
+Match Address 192.168.10.0/24 User dba,admin
+    PasswordAuthentication yes
+    MaxAuthTries 8
+
+# 全局配置写在 Match 之后(sshd 中这是全局段,但容易误读,核查器按语法如实解析)
+PubkeyAuthentication yes
+AllowGroups ops sshusers

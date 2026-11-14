@@ -1,0 +1,12 @@
+# 等保主机基线核查规则集(三级要求,参考 GB/T 22239-2019 与 CIS Benchmark)
+# 规则文件本身也支持 include,按组件拆分维护。
+version: 1
+include:
+  - sshd.yml
+  - sysctl.yml
+  - sudoers.yml
+  - pam.yml
+  - login_defs.yml
+  - cron.yml
+  - files.yml
+rules: []

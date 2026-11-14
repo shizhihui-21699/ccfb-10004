@@ -1,0 +1,17 @@
+# 整改后 sshd 配置(2026-11-13 基线加固)
+Include /etc/ssh/sshd_config.d/*.conf
+
+PermitRootLogin no
+PermitEmptyPasswords no
+PubkeyAuthentication yes
+PasswordAuthentication yes
+MaxAuthTries 4
+LoginGraceTime 30
+X11Forwarding no
+HostbasedAuthentication no
+ClientAliveInterval 300
+ClientAliveCountMax 3
+AllowGroups sshusers
+Ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes256-ctr,aes128-ctr
+MACs hmac-sha2-512,hmac-sha2-256
+KexAlgorithms curve25519-sha256,diffie-hellman-group16-sha512

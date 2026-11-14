@@ -1,0 +1,108 @@
+# PAM 认证模块基线
+rules:
+  - id: PAM-001
+    title: 口令认证栈启用 pam_faillock 登录失败锁定
+    component: pam
+    severity: high
+    tags: [等保-8.1.3.1, 登录失败处理]
+    fact: pam.lines
+    args:
+      type: auth
+      module: "pam_faillock.so"
+    operator: exists
+    on_empty: fail
+    rationale: 等保三级要求配置登录失败处理功能(锁定、限制次数),
+      RHEL 系通过 pam_faillock、Debian 系通过 pam_tally2/pam_faillock 实现。
+    remediation: |
+      /etc/pam.d/system-auth 与 password-auth 中:
+        auth required pam_faillock.so preauth silent deny=5 unlock_time=900
+        auth required pam_faillock.so authfail deny=5 unlock_time=900
+        account required pam_faillock.so
+    references: [GB/T 22239-2019 8.1.3.1, CIS 5.4.2]
+
+  - id: PAM-002
+    title: faillock 锁定阈值不超过 5 次
+    component: pam
+    severity: high
+    tags: [等保-8.1.3.1, 登录失败处理]
+    fact: pam.lines
+    args:
+      type: auth
+      module: "pam_faillock.so"
+    pass_when: { kind: arg_at_most, arg: "deny", limit: 5 }
+    match_policy: all
+    on_empty: fail
+    rationale: 仅加载模块但未配置 deny 等于没有阈值,且阈值不得大于 5。
+    remediation: "faillock 参数增加 deny=5(数值不大于 5)"
+
+  - id: PAM-003
+    title: 口令复杂度校验启用(pam_pwquality)
+    component: pam
+    severity: high
+    tags: [等保-8.1.3.1, 口令复杂度]
+    fact: pam.lines
+    args:
+      type: password
+      module: "pam_pwquality.so"
+    operator: exists
+    on_empty: fail
+    rationale: 等保要求口令满足复杂度(长度、字符种类)。
+    remediation: |
+      /etc/pam.d/system-auth:
+        password requisite pam_pwquality.so try_first_pass retry=3 minlen=8
+    references: [CIS 5.4.1]
+
+  - id: PAM-004
+    title: 口令哈希使用 sha512
+    component: pam
+    severity: medium
+    tags: [等保-8.1.3.1, 口令存储]
+    fact: pam.lines
+    args:
+      type: password
+      module: "pam_unix.so"
+    pass_when: { kind: meta_contains_arg, arg: "sha512" }
+    match_policy: any
+    on_empty: fail
+    rationale: md5/des 哈希已可快速破解,必须使用 sha512 或 yescrypt。
+    remediation: "pam_unix.so 参数增加 sha512(或使用 yescrypt)"
+
+  - id: PAM-005
+    title: 禁止 pam_unix 回退到 nullok 空密码
+    component: pam
+    severity: high
+    tags: [等保-8.1.3.1, 身份鉴别]
+    fact: pam.lines
+    args:
+      type: auth
+      module: "pam_unix.so"
+    pass_when: { kind: args_not_contains, arg: "nullok" }
+    match_policy: all
+    on_empty: pass
+    rationale: nullok 允许空密码账户登录,与空密码禁令冲突。
+    remediation: 删除 pam_unix.so 参数中的 nullok。
+
+  - id: PAM-006
+    title: 关键服务接入 pam_access 访问控制
+    component: pam
+    severity: low
+    fact: pam.lines
+    args:
+      service: "sshd"
+      module: "pam_access.so"
+    operator: exists
+    on_empty: pass
+    rationale: pam_access 配合 /etc/security/access.conf 可限制登录来源。
+    remediation: "sshd 的 account 栈增加: account required pam_access.so"
+
+  - id: PAM-007
+    title: 登录会话启用 pam_lastlog 记录
+    component: pam
+    severity: low
+    fact: pam.lines
+    args:
+      type: session
+      module: "pam_lastlog.so"
+    operator: exists
+    on_empty: pass
+    remediation: "session optional pam_lastlog.so showfailed"

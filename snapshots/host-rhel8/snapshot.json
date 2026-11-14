@@ -1,0 +1,16 @@
+{
+  "host_id": "host-rhel8",
+  "hostname": "rhel8-app-01",
+  "distro": "RHEL",
+  "release": "8.9",
+  "collected_at": "2026-11-10T09:00:00+08:00",
+  "files": {
+    "etc/shadow":            {"mode": "0600", "owner": "root", "group": "root"},
+    "etc/passwd":            {"mode": "0644", "owner": "root", "group": "root"},
+    "etc/gshadow":           {"mode": "0640", "owner": "root", "group": "root"},
+    "etc/ssh/sshd_config":   {"mode": "0600", "owner": "root", "group": "root"},
+    "etc/sudoers":           {"mode": "0440", "owner": "root", "group": "root"},
+    "etc/cron.allow":        {"mode": "0600", "owner": "root", "group": "root"},
+    "etc/issue":             {"mode": "0644", "owner": "root", "group": "root"}
+  }
+}

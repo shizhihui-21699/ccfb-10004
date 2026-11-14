@@ -1,0 +1,14 @@
+# /etc/sudoers - 规范主机,visudo -c 校验通过
+Defaults env_reset
+Defaults mail_badpass
+Defaults secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+Defaults logfile="/var/log/sudo.log"
+Defaults timestamp_timeout=10
+
+root ALL=(ALL) ALL
+%wheel ALL=(ALL) ALL
+
+# 应用账户只允许重启应用服务
+appops ALL=(root) /bin/systemctl restart app.service, /bin/systemctl status app.service
+
+#includedir /etc/sudoers.d

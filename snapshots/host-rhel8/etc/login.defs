@@ -1,0 +1,13 @@
+#
+# /etc/login.defs - RHEL8 基线
+#
+PASS_MAX_DAYS   90
+PASS_MIN_DAYS   1
+PASS_MIN_LEN    8
+PASS_WARN_AGE   7
+ENCRYPT_METHOD  SHA512
+UMASK           027
+FAIL_DELAY      4
+TMOUT           900
+USERGROUPS_ENAB yes
+CREATE_HOME     yes

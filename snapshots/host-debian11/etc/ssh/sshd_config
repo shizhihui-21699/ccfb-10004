@@ -1,0 +1,8 @@
+# Debian 11 最小化安装,几乎全是默认值(被注释的默认项不算显式配置)
+#Port 22
+#PermitRootLogin prohibit-password
+#PermitEmptyPasswords no
+#MaxAuthTries 6
+#X11Forwarding no
+PasswordAuthentication yes
+Subsystem sftp /usr/lib/openssh/sftp-server

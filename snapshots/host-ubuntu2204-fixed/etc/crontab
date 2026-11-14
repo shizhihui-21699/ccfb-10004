@@ -1,0 +1,5 @@
+SHELL=/bin/sh
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+# 整改:可疑外联任务已删除,仅保留合法清理任务
+17 * * * * root /usr/local/bin/cleanup.sh

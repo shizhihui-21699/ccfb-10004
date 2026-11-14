@@ -1,0 +1,14 @@
+{
+  "host_id": "host-ubuntu2204",
+  "hostname": "ubuntu-web-02",
+  "distro": "Ubuntu",
+  "release": "22.04",
+  "collected_at": "2026-11-10T10:20:00+08:00",
+  "files": {
+    "etc/shadow":            {"mode": "0644", "owner": "root", "group": "root"},
+    "etc/passwd":            {"mode": "0644", "owner": "root", "group": "root"},
+    "etc/gshadow":           {"mode": "0644", "owner": "root", "group": "root"},
+    "etc/ssh/sshd_config":   {"mode": "0644", "owner": "root", "group": "root"},
+    "etc/sudoers":           {"mode": "0440", "owner": "root", "group": "root"}
+  }
+}

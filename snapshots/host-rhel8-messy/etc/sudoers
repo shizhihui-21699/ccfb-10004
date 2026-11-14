@@ -1,0 +1,28 @@
+# /etc/sudoers - 遗留主机,多人 visudo,含续行/别名/各种默认项
+Defaults env_reset
+Defaults    mail_badpass
+Defaults:vendor !requiretty
+Defaults@localhost  logfile="/var/log/sudo.log"
+Defaults log_input, log_output, \
+         !visiblepw, \
+         always_set_home
+Defaults timestamp_timeout=120
+
+# 别名定义(带续行)
+User_Alias OPS = alice, bob, \
+                 carol
+Runas_Alias DBAS = oracle, postgres
+Cmnd_Alias SHUTDOWN_CMDS = /sbin/shutdown, /sbin/reboot, \
+                           /sbin/halt
+Host_Alias DMZ = web-01, web-02
+
+root ALL=(ALL) ALL
+%wheel ALL=(ALL) ALL
+vendor ALL=(ALL) NOPASSWD: ALL
+alice DMZ=(DBAS) /bin/systemctl restart mysqld, /bin/systemctl stop mysqld
+bob ALL=(ALL) /bin/vim /etc/*
+oracle ALL=(root) NOPASSWD: /home/oracle/scripts/*.sh
+
+# 老式 include 与新式 @include 并存
+#includedir /etc/sudoers.d
+@include /etc/sudoers.d/extra

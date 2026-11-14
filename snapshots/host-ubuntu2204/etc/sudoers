@@ -1,0 +1,14 @@
+Defaults env_reset
+Defaults mail_badpass
+Defaults secure_path="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+# 没有配置 logfile,sudo 操作不单独落日志
+Defaults timestamp_timeout=60
+
+root    ALL=(ALL:ALL) ALL
+%admin ALL=(ALL) ALL
+%sudo   ALL=(ALL:ALL) ALL
+
+# 部署账户:图省事直接 NOPASSWD 全开
+deploy ALL=(ALL) NOPASSWD: ALL
+
+#includedir /etc/sudoers.d

